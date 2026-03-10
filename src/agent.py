@@ -12,8 +12,10 @@ from livekit.agents import (
     inference,
     room_io,
 )
-from livekit.plugins import noise_cancellation, silero
+# from livekit.plugins import noise_cancellation
+from livekit.plugins import silero
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
+from livekit.plugins import openai
 
 logger = logging.getLogger("agent")
 
@@ -57,7 +59,7 @@ def prewarm(proc: JobProcess):
 server.setup_fnc = prewarm
 
 
-@server.rtc_session(agent_name="my-agent")
+@server.rtc_session(agent_name="fai-voice-agent")
 async def my_agent(ctx: JobContext):
     # Logging setup
     # Add any other context you want in all log entries here
@@ -67,17 +69,38 @@ async def my_agent(ctx: JobContext):
 
     # Set up a voice AI pipeline using OpenAI, Cartesia, Deepgram, and the LiveKit turn detector
     session = AgentSession(
+
         # Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
         # See all available models at https://docs.livekit.io/agents/models/stt/
-        stt=inference.STT(model="deepgram/nova-3", language="multi"),
+        # stt=inference.STT(model="deepgram/nova-3", language="multi"),
+        stt=openai.STT(
+            model="parakeet-tdt-0.6b-v3",
+            base_url="http://localhost:5092/v1",
+            api_key="not-needed"
+        ),
+        
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
-        llm=inference.LLM(model="openai/gpt-4.1-mini"),
+        # llm=inference.LLM(model="openai/gpt-4.1-mini"),
+        llm = openai.LLM(
+            model="medgemma-4b",  
+            base_url="http://localhost:8000/v1",  
+            api_key="dummy" # vLLM does not require a real API key
+        ),
+        
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
-        tts=inference.TTS(
-            model="cartesia/sonic-3", voice="9626c31c-bec5-4cca-baa8-f8ba9e84c8bc"
+        # tts=inference.TTS(
+        #     model="cartesia/sonic-3", voice="9626c31c-bec5-4cca-baa8-f8ba9e84c8bc"
+        # ),
+        tts = openai.TTS(
+            model="kokoro",
+            base_url="http://localhost:8880/v1",
+            voice="af_heart",
+            api_key="not-needed"
         ),
+
+        
         # VAD and turn detection are used to determine when the user is speaking and when the agent should respond
         # See more at https://docs.livekit.io/agents/build/turns
         turn_detection=MultilingualModel(),
@@ -111,12 +134,13 @@ async def my_agent(ctx: JobContext):
         room=ctx.room,
         room_options=room_io.RoomOptions(
             audio_input=room_io.AudioInputOptions(
-                noise_cancellation=lambda params: (
-                    noise_cancellation.BVCTelephony()
-                    if params.participant.kind
-                    == rtc.ParticipantKind.PARTICIPANT_KIND_SIP
-                    else noise_cancellation.BVC()
-                ),
+                # noise_cancellation=lambda params: (
+                #     noise_cancellation.BVCTelephony()
+                #     if params.participant.kind
+                #     == rtc.ParticipantKind.PARTICIPANT_KIND_SIP
+                #     else noise_cancellation.BVC()
+                # ),
+                noise_cancellation=None,
             ),
         ),
     )
