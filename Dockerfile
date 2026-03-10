@@ -10,16 +10,16 @@ FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS base
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-ARG UID=10001
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/app" \
-    --shell "/sbin/nologin" \
-    --uid "${UID}" \
-    appuser
+# # Create a non-privileged user that the app will run under.
+# # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
+# ARG UID=10001
+# RUN adduser \
+#     --disabled-password \
+#     --gecos "" \
+#     --home "/app" \
+#     --shell "/sbin/nologin" \
+#     --uid "${UID}" \
+#     appuser
 
 # Install build dependencies required for Python packages with native extensions
 # gcc: C compiler needed for building Python packages with C extensions
@@ -50,13 +50,13 @@ RUN uv sync --locked
 # (Excludes files specified in .dockerignore)
 COPY . .
 
-# Change ownership of all app files to the non-privileged user
-# This ensures the application can read/write files as needed
-RUN chown -R appuser:appuser /app
+# # Change ownership of all app files to the non-privileged user
+# # This ensures the application can read/write files as needed
+# RUN chown -R appuser:appuser /app
 
-# Switch to the non-privileged user for all subsequent operations
-# This improves security by not running as root
-USER appuser
+# # Switch to the non-privileged user for all subsequent operations
+# # This improves security by not running as root
+# USER appuser
 
 # Pre-download any ML models or files the agent needs
 # This ensures the container is ready to run immediately without downloading

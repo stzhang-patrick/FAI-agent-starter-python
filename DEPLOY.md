@@ -21,13 +21,3 @@ docker run -d \
     livekit-agent:1.0 \
     uv run src/agent.py start
 ```
-
-
-docker run -it --rm \
-    --name livekit-agent \
-    --network host \
-    -e LIVEKIT_URL=ws://localhost:7880 \
-    -e LIVEKIT_API_KEY=devkey \
-    -e LIVEKIT_API_SECRET=secret \
-    livekit-agent:1.0 \
-    uv run src/agent.py start
